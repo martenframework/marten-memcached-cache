@@ -1,5 +1,9 @@
 module MartenMemcachedCache
   # A cache store implementation that stores data in Memcached.
+  #
+  # The `host` and `port` arguments are optional and default respectively to localhost and 11211. It should be noted
+  # that this cache store also supports all the existing initialization options in addition to these arguments (eg.
+  # namespace, version, expires_in, etc).
   class Store < Marten::Cache::Store::Base
     def initialize(
       @namespace : String? = nil,
