@@ -2,12 +2,11 @@ require "./spec_helper"
 
 describe MartenMemcachedCache::Store do
   around_each do |t|
-    memcached_client = Memcached::Client.new
-    memcached_client.flush
+    Marten.cache.clear
 
     t.run
 
-    memcached_client.flush
+    Marten.cache.clear
   end
 
   describe "#clear" do
