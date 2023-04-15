@@ -39,5 +39,7 @@ jobs:
       with:
         path: ~/.cache/crystal
         key: ${{ runner.os }}-crystal
+    - name: Setup env JSON file
+      run: cp .spec.env.json.ci .spec.env.json
     - name: Run tests
       run: make tests

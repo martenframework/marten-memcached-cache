@@ -3,6 +3,10 @@ init:
 
 	shards install
 
+	@printf "${YELLOW}---------------- Initialization ---${RESET} ${GREEN}Environment settings${RESET}\n\n"
+
+	rsync --ignore-existing .spec.env.json.example .spec.env.json
+
 	@printf "\n\n${YELLOW}---------------- Done.${RESET}\n\n"
 
 
