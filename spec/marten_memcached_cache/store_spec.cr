@@ -21,6 +21,62 @@ describe MartenMemcachedCache::Store do
     end
   end
 
+  describe "#decrement" do
+    it "can decrement an existing integer value" do
+      2.times { Marten.cache.increment("foo") }
+
+      Marten.cache.decrement("foo").should eq 1
+      Marten.cache.read("foo", raw: true).try(&.to_i).should eq 1
+    end
+
+    it "can decrement an existing integer value when a namespace is used" do
+      store = MartenMemcachedCache::Store.new(
+        namespace: "ns",
+        host: ENV_SETTINGS["MEMCACHED_HOST"].as(String),
+        port: ENV_SETTINGS["MEMCACHED_PORT"].as(Int32)
+      )
+      2.times { store.increment("foo") }
+
+      store.decrement("foo").should eq 1
+      store.read("foo", raw: true).try(&.to_i).should eq 1
+    end
+
+    it "can decrement an existing integer value for a key that is not expired" do
+      2.times { Marten.cache.increment("foo", expires_in: 2.hours) }
+
+      Marten.cache.decrement("foo").should eq 1
+      Marten.cache.read("foo", raw: true).try(&.to_i).should eq 1
+    end
+
+    it "can decrement an existing integer value by a specific amount" do
+      5.times { Marten.cache.increment("foo") }
+
+      Marten.cache.decrement("foo", amount: 3).should eq 2
+      Marten.cache.read("foo", raw: true).try(&.to_i).should eq 2
+    end
+
+    it "writes 0 in case the key does not exist" do
+      Marten.cache.decrement("foo").should eq 0
+      Marten.cache.read("foo", raw: true).try(&.to_i).should eq 0
+
+      Marten.cache.decrement("bar", amount: 2).should eq 0
+      Marten.cache.read("bar", raw: true).try(&.to_i).should eq 0
+    end
+
+    it "writes the amount value to the cache in case the key is expired" do
+      5.times { Marten.cache.increment("foo", expires_in: 1.second) }
+      5.times { Marten.cache.increment("bar", expires_in: 1.second) }
+
+      sleep 2
+
+      Marten.cache.decrement("foo").should eq 0
+      Marten.cache.read("foo", raw: true).try(&.to_i).should eq 0
+
+      Marten.cache.decrement("bar", amount: 2).should eq 0
+      Marten.cache.read("bar", raw: true).try(&.to_i).should eq 0
+    end
+  end
+
   describe "#delete" do
     it "deletes the entry associated with the passed key and returns true" do
       Marten.cache.write("foo", "bar")
@@ -59,7 +115,7 @@ describe MartenMemcachedCache::Store do
   end
 
   describe "#write" do
-    it "write a store value as expected" do
+    it "write a Marten.cache value as expected" do
       Marten.cache.write("foo", "bar")
       Marten.cache.read("foo").should eq "bar"
     end
