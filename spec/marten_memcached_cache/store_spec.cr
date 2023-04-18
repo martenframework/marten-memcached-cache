@@ -102,6 +102,62 @@ describe MartenMemcachedCache::Store do
     end
   end
 
+  describe "#increment" do
+    it "can increment an existing integer value" do
+      2.times { Marten.cache.increment("foo") }
+
+      Marten.cache.increment("foo").should eq 3
+      Marten.cache.read("foo", raw: true).try(&.to_i).should eq 3
+    end
+
+    it "can increment an existing integer value when a namespace is used" do
+      store = MartenMemcachedCache::Store.new(
+        namespace: "ns",
+        host: ENV_SETTINGS["MEMCACHED_HOST"].as(String),
+        port: ENV_SETTINGS["MEMCACHED_PORT"].as(Int32)
+      )
+      2.times { store.increment("foo") }
+
+      store.increment("foo").should eq 3
+      store.read("foo", raw: true).try(&.to_i).should eq 3
+    end
+
+    it "can increment an existing integer value for a key that is not expired" do
+      2.times { Marten.cache.increment("foo", expires_in: 2.hours) }
+
+      Marten.cache.increment("foo").should eq 3
+      Marten.cache.read("foo", raw: true).try(&.to_i).should eq 3
+    end
+
+    it "can increment an existing integer value by a specific amount" do
+      5.times { Marten.cache.increment("foo") }
+
+      Marten.cache.increment("foo", amount: 3).should eq 8
+      Marten.cache.read("foo", raw: true).try(&.to_i).should eq 8
+    end
+
+    it "increments as expected in case the key does not exist" do
+      Marten.cache.increment("foo").should eq 1
+      Marten.cache.read("foo", raw: true).try(&.to_i).should eq 1
+
+      Marten.cache.increment("bar", amount: 2).should eq 2
+      Marten.cache.read("bar", raw: true).try(&.to_i).should eq 2
+    end
+
+    it "writes the amount value to the cache in case the key is expired" do
+      5.times { Marten.cache.increment("foo", expires_in: 1.second) }
+      5.times { Marten.cache.increment("bar", expires_in: 1.second) }
+
+      sleep 2
+
+      Marten.cache.increment("foo").should eq 1
+      Marten.cache.read("foo", raw: true).try(&.to_i).should eq 1
+
+      Marten.cache.increment("bar", amount: 2).should eq 2
+      Marten.cache.read("bar", raw: true).try(&.to_i).should eq 2
+    end
+  end
+
   describe "#read" do
     it "returns the cached value if there is one" do
       Marten.cache.write("foo", "bar")
