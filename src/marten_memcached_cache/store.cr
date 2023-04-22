@@ -51,6 +51,10 @@ module MartenMemcachedCache
       ).not_nil!
     end
 
+    def delete_entry(key : String) : Bool
+      client.delete(key)
+    end
+
     def increment(
       key : String,
       amount : Int32 = 1,
@@ -77,24 +81,11 @@ module MartenMemcachedCache
       ).not_nil!
     end
 
-    private def adapt_expiry_for_race_condition(expires_in : Time::Span? = nil, race_condition_ttl : Time::Span? = nil)
-      # Add an extra 5 minutes to the expiry of the memcached entry to allow for race condition TTL reads.
-      if !expires_in.nil? && !race_condition_ttl.nil?
-        expires_in += 5.minutes
-      end
-
-      expires_in
-    end
-
-    private def delete_entry(key : String) : Bool
-      client.delete(key)
-    end
-
-    private def read_entry(key : String) : String?
+    def read_entry(key : String) : String?
       client.get(key)
     end
 
-    private def write_entry(
+    def write_entry(
       key : String,
       value : String,
       expires_in : Time::Span? = nil,
@@ -104,6 +95,15 @@ module MartenMemcachedCache
 
       client.set(key, value, expires_in.try(&.total_seconds.to_i) || 0)
       true
+    end
+
+    private def adapt_expiry_for_race_condition(expires_in : Time::Span? = nil, race_condition_ttl : Time::Span? = nil)
+      # Add an extra 5 minutes to the expiry of the memcached entry to allow for race condition TTL reads.
+      if !expires_in.nil? && !race_condition_ttl.nil?
+        expires_in += 5.minutes
+      end
+
+      expires_in
     end
   end
 end
