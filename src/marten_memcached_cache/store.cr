@@ -12,7 +12,7 @@ module MartenMemcachedCache
       @compress = true,
       @compress_threshold = Marten::Cache::Store::Base::DEFAULT_COMPRESS_THRESHOLD,
       host : String = "localhost",
-      port : Int32 = 11211
+      port : Int32 = 11211,
     )
       super(@namespace, @expires_in, @version, @compress, @compress_threshold)
 
@@ -33,7 +33,7 @@ module MartenMemcachedCache
       version : Int32? = nil,
       race_condition_ttl : Time::Span? = nil,
       compress : Bool? = nil,
-      compress_threshold : Int32? = nil
+      compress_threshold : Int32? = nil,
     ) : Int
       effective_expires_in = if !expires_at.nil?
                                expires_at.to_utc - Time.utc
@@ -63,7 +63,7 @@ module MartenMemcachedCache
       version : Int32? = nil,
       race_condition_ttl : Time::Span? = nil,
       compress : Bool? = nil,
-      compress_threshold : Int32? = nil
+      compress_threshold : Int32? = nil,
     ) : Int
       effective_expires_in = if !expires_at.nil?
                                expires_at.to_utc - Time.utc
@@ -89,7 +89,7 @@ module MartenMemcachedCache
       key : String,
       value : String,
       expires_in : Time::Span? = nil,
-      race_condition_ttl : Time::Span? = nil
+      race_condition_ttl : Time::Span? = nil,
     )
       expires_in = adapt_expiry_for_race_condition(expires_in, race_condition_ttl)
 
